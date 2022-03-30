@@ -23,17 +23,8 @@ class OscillatorStream():
     def audio_callback(self, in_data, frame_count, time_info, status):
         samples = np.zeros(frame_count, np.float32)
         oscillators = self.oscillators.copy()
-        for key, value in oscillators.items():
-
-            start_time = timer()
-
-            frequency = value.frequency
-            
+        for _, value in oscillators.items():
             samples += value.getSamples(frame_count)
-            
-
-            end_time = timer()
-            print(end_time-start_time)
 
         if len(oscillators) > 0:
             samples /= len(oscillators)
