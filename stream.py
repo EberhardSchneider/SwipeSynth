@@ -3,24 +3,11 @@
 import pyaudio
 import numpy as np
 from timeit import default_timer as timer
+from streamoscillator import Oscillator
 
-from streamoscillator import SineOscillator
 SAMPLE_RATE = 44100
 TWOPI = np.pi * 2
 TWOPIOVERSR = np.pi * 2 / SAMPLE_RATE
-
-# class Oscillator():
-#     currentPhase = 0
-#     type = 'sine'
-#     f = lambda x : np.sin(x)
-
-#     def setType(self, type):
-#         if type == 'sine':
-#             self.f = lambda x : np.sin(x)
-#         elif type == 'saw_up':
-#             self.f = lambda x : np.abs( (x%TWOPI) /np.pi) - 1.0
-#         elif type == 'square':
-#             self.f = lambda x : x
 
 class OscillatorStream():
     currentPhase = 0
@@ -41,10 +28,9 @@ class OscillatorStream():
             start_time = timer()
 
             frequency = value.frequency
-            current_frame = value.currentPhase / ( TWOPIOVERSR * frequency )
             
-            samples += (np.sin(TWOPIOVERSR*np.arange(current_frame, current_frame + frame_count)*frequency)).astype(np.float32)
-            self.oscillators[key].currentPhase =  ( TWOPIOVERSR * frequency * (current_frame + frame_count ) ) % TWOPI
+            samples += value.getSamples(frame_count)
+            
 
             end_time = timer()
             print(end_time-start_time)
@@ -75,7 +61,7 @@ class OscillatorStream():
         return 
 
     def addOscillator(self, id, frequency, type):
-        osc = SineOscillator(self.p)
+        osc = Oscillator(self.p)
         self.oscillators[str(id)] = osc 
    
 
@@ -85,11 +71,6 @@ class OscillatorStream():
     def changeFrequency(self, id, frequency):
         self.oscillators[str(id)].frequency = frequency
 
-    def getSamples(self, frame_count):
-        current_frame = self.currentPhase * self.sr / ( 2*np.pi * self.frequency )
-        samples = (np.sin(TWOPI*np.arange(current_frame, current_frame + frame_count)*self.frequency/self.sr)).astype(np.float32)
-        self.currentPhase =  ( TWOPI * self.frequency * (current_frame + frame_count ) / self.sr ) % TWOPI
-        return samples
      
         
 

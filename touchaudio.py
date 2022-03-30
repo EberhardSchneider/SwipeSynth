@@ -11,7 +11,6 @@ BASE_FREQ = 220
 SEMITONERATIO = 1.0594630943592952645
 
 class TouchAudio(Widget):
-
     p = None
     n_osc = 1
     stream = None
