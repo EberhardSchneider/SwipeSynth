@@ -23,7 +23,6 @@ class TouchAudio(Widget):
         self.stream = stream.OscillatorStream( self.p )
         self.stream.start()
 
-
     def on_touch_down(self, touch):
         self.stream.addOscillator(touch.uid, self.calcFrequency(touch.x), 'sine')
 
@@ -34,24 +33,17 @@ class TouchAudio(Widget):
     def on_touch_up(self, touch):
         self.stream.removeOscillator(touch.uid)
 
-    def calcFrequency(self,  x ):
+    def calcFrequency(self,  x):
         x = x * SCALE_FACTOR
         freq = BASE_FREQ * SEMITONERATIO**x
         return freq
 
 class SimpleScore(Widget):
     notes = []
-    
-
-
-
-
-
 
 class TouchAudioApp(App):
     def build(self):
         return TouchAudio()
-
 
 if __name__ == '__main__':
     TouchAudioApp().run()

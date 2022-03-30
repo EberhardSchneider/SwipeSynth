@@ -3,42 +3,35 @@
 import pyaudio
 import numpy as np
 from timeit import default_timer as timer
+
+from streamoscillator import SineOscillator
 SAMPLE_RATE = 44100
 TWOPI = np.pi * 2
 TWOPIOVERSR = np.pi * 2 / SAMPLE_RATE
 
-class Oscillator():
-    current_phase = 0
-    type = 'sine'
-    f = lambda x : np.sin(x)
+# class Oscillator():
+#     currentPhase = 0
+#     type = 'sine'
+#     f = lambda x : np.sin(x)
 
-    def setType(self, type):
-        if type == 'sine':
-            self.f = lambda x : np.sin(x)
-        elif type == 'saw_up':
-            self.f = lambda x : np.abs( (x%TWOPI) /np.pi) - 1.0
-        elif type == 'square':
-            self.f = lambda x : x
-
+#     def setType(self, type):
+#         if type == 'sine':
+#             self.f = lambda x : np.sin(x)
+#         elif type == 'saw_up':
+#             self.f = lambda x : np.abs( (x%TWOPI) /np.pi) - 1.0
+#         elif type == 'square':
+#             self.f = lambda x : x
 
 class OscillatorStream():
-    
     currentPhase = 0
     increment = 0
     frequency = 440.0
     isPlaying = False
-    fs = SAMPLE_RATE
-
-
-
+    sr = SAMPLE_RATE
     oscillators = {}
-
- 
 
     def __init__(self, audioEngine):
         self.p = audioEngine
-        self.create_table()
-
 
     def audio_callback(self, in_data, frame_count, time_info, status):
         samples = np.zeros(frame_count, np.float32)
@@ -47,11 +40,11 @@ class OscillatorStream():
 
             start_time = timer()
 
-            frequency = value.f
-            current_frame = value.current_phase / ( TWOPIOVERSR * frequency )
+            frequency = value.frequency
+            current_frame = value.currentPhase / ( TWOPIOVERSR * frequency )
             
             samples += (np.sin(TWOPIOVERSR*np.arange(current_frame, current_frame + frame_count)*frequency)).astype(np.float32)
-            self.oscillators[key].current_phase =  ( TWOPIOVERSR * frequency * (current_frame + frame_count ) ) % TWOPI
+            self.oscillators[key].currentPhase =  ( TWOPIOVERSR * frequency * (current_frame + frame_count ) ) % TWOPI
 
             end_time = timer()
             print(end_time-start_time)
@@ -66,7 +59,7 @@ class OscillatorStream():
             return None
         self.stream = self.p.open(format=pyaudio.paFloat32,
                             channels=1,
-                            rate=self.fs,
+                            rate=self.sr,
                             output=True,
                             stream_callback = self.audio_callback,
                             frames_per_buffer=1024)
@@ -82,7 +75,7 @@ class OscillatorStream():
         return 
 
     def addOscillator(self, id, frequency, type):
-        osc = Bunch(f = frequency, type = type, current_phase = 0)
+        osc = SineOscillator(self.p)
         self.oscillators[str(id)] = osc 
    
 
@@ -90,11 +83,14 @@ class OscillatorStream():
         del self.oscillators[str(id)]
 
     def changeFrequency(self, id, frequency):
-        self.oscillators[str(id)].f = frequency
+        self.oscillators[str(id)].frequency = frequency
 
-
-        return ( samples, pyaudio.paContinue )
-
+    def getSamples(self, frame_count):
+        current_frame = self.currentPhase * self.sr / ( 2*np.pi * self.frequency )
+        samples = (np.sin(TWOPI*np.arange(current_frame, current_frame + frame_count)*self.frequency/self.sr)).astype(np.float32)
+        self.currentPhase =  ( TWOPI * self.frequency * (current_frame + frame_count ) / self.sr ) % TWOPI
+        return samples
+     
         
 
 
